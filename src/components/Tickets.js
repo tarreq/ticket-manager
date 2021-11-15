@@ -1,9 +1,8 @@
-import { Fragment, useState, useEffect } from 'react'
+import { Fragment, useState, useEffect, useRef, useCallback } from 'react'
 import { Disclosure, Menu, Transition } from '@headlessui/react'
 import { BellIcon, MenuIcon, XIcon } from '@heroicons/react/outline'
 import { v4 as uuidv4 } from 'uuid'
 import TicketsList from './TicketsList'
-import Pagination from './Pagination'
 import AddTicketForm from './AddTicketForm'
 
 import { default as data } from '../data.json'
@@ -32,34 +31,26 @@ function classNames(...classes) {
 }
 
 export default function Tickets() {
-  let pageSize = 10
-  const [offset, setOffset] = useState(0)
+  let pageSize = 20
+  const [pageNo, setPageNo] = useState(1)
   const [tickets, setTickets] = useState([])
-  const [ticketsPage, setTicketsPage] = useState(tickets.slice(offset, pageSize))
   const [addTicketFormOpen, setAddTicketFormOpen] = useState(false)
   const [editItem, setEditItem] = useState(null)
-  const pages = tickets.length / pageSize
+
+  const observer = useRef()
+  const lastTicketElementRef= useCallback(node => {
+    if(observer.current) observer.current.disconnect()
+    observer.current = new IntersectionObserver(entries => {
+      if(entries[0].isIntersecting) {
+        setPageNo(pageNumber => pageNumber + 1)
+      }
+    })
+    if(node) observer.current.observe(node)
+  },[])
 
   useEffect(() => {
-    setTickets(data.tickets)
-  }, [])
-
-  useEffect(() => {
-    setTicketsPage(tickets.slice(offset, offset + pageSize))
-  }, [offset, pageSize, tickets])
-
-
-  const handleNextPage = () => {
-    if(offset + pageSize < tickets.length) {
-      setOffset(offset + pageSize)
-    }
-  }
- 
-  const handlePreviousPage = () => {
-    if(offset > 0) {
-      setOffset(offset - pageSize)
-    }
-  }
+    setTickets(data.tickets.slice(0, pageSize * pageNo))
+  }, [pageNo, pageSize])
 
   const handleAddOrUpdateTicket = (subject, priority, ticketStatus, description) => {
     // If edit mode
@@ -88,7 +79,6 @@ export default function Tickets() {
         description
   
       }, ...tickets])
-      setOffset(0)
       setAddTicketFormOpen(false)
     }
     
@@ -271,16 +261,9 @@ export default function Tickets() {
             <div className="px-4 py-6 sm:px-0">
             
               <TicketsList 
-                tickets={ticketsPage} 
+                tickets={tickets}
+                lastElRef={lastTicketElementRef}
                 handleEditTicket={handleEditTicket}
-              />
-              <Pagination 
-                pages={pages} 
-                offset={offset} 
-                pageSize={pageSize} 
-                length={tickets.length}
-                handleNextPage={handleNextPage}
-                handlePreviousPage={handlePreviousPage}
               />
             </div>
             <AddTicketForm 
