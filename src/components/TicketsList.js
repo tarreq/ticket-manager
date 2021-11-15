@@ -1,6 +1,6 @@
 import { CheckCircleIcon, RefreshIcon } from '@heroicons/react/solid'
 
-  export default function TicketsList({tickets, handleEditTicket}) {
+  export default function TicketsList({tickets, handleEditTicket, lastElRef}) {
     const priorityMap = {
       "High": "red",
       "Medium": "yellow",
@@ -44,10 +44,10 @@ import { CheckCircleIcon, RefreshIcon } from '@heroicons/react/solid'
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {tickets.map((ticket) => {
+                  {tickets.map((ticket, index) => {
                     const color = priorityMap[ticket.priority]
                     return (
-                    <tr key={ticket.id}>
+                        <tr key={ticket.id} ref={ tickets.length === index + 1 ? lastElRef : undefined}>
                       <td className="px-6 py-4 whitespace-nowrap max-w-xs">
                         <div className="text-sm text-gray-500">{ticket.subject}</div>
                       </td>
